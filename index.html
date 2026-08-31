@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Togevo — Together + Evolution</title>
+<meta name="description" content="Togevo connecte joueurs et entraîneurs pour fixer des objectifs et progresser ensemble.">
+<meta name="theme-color" content="#0B1A2C">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ================= AUTH ================= -->
+  <section id="screen-auth" class="screen auth-screen active">
+    <div class="brand">
+      <img class="brand-mark" src="icons/icon-192.png" alt="Togevo">
+      <div class="brand-text">
+        <span class="brand-name">Togevo</span>
+        <span class="brand-tagline">Together Evolution</span>
+      </div>
+    </div>
+
+    <div class="auth-card">
+      <div id="auth-login-form">
+        <h1>Content de te revoir</h1>
+        <p class="auth-sub">Connecte-toi pour retrouver tes objectifs.</p>
+        <div class="field"><label for="login-email">E-mail</label><input id="login-email" type="email" autocomplete="email" placeholder="prenom@email.com"></div>
+        <div class="field"><label for="login-pass">Mot de passe</label><input id="login-pass" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+        <button class="btn btn-primary" id="btn-login">Se connecter</button>
+        <p class="auth-switch">Pas encore de compte ? <button id="go-signup">Créer un compte</button></p>
+      </div>
+
+      <div id="auth-signup-form" class="hidden">
+        <h1>Bienvenue sur Togevo</h1>
+        <p class="auth-sub">Together + Evolution — progresse avec ton entraîneur.</p>
+        <div class="field"><label for="su-first">Prénom</label><input id="su-first" placeholder="Camille"></div>
+        <div class="field"><label for="su-last">Nom</label><input id="su-last" placeholder="Dupont"></div>
+        <div class="field"><label for="su-email">E-mail</label><input id="su-email" type="email" placeholder="prenom@email.com"></div>
+        <div class="field"><label for="su-pass">Mot de passe</label><input id="su-pass" type="password" placeholder="••••••••"></div>
+        <div class="field"><label for="su-phone">Téléphone (optionnel, pour WhatsApp)</label><input id="su-phone" type="tel" placeholder="+32 4xx xx xx xx"></div>
+        <div class="field">
+          <label>Tu es…</label>
+          <div class="role-toggle">
+            <div class="chip-toggle selected" data-role="player">🏓 Joueur·se</div>
+            <div class="chip-toggle" data-role="coach">👨‍🏫 Entraîneur·se</div>
+            <div class="chip-toggle" data-role="both">Les deux</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-signup">Créer mon compte</button>
+        <p class="auth-switch">Déjà un compte ? <button id="go-login">Se connecter</button></p>
+      </div>
+    </div>
+    <p class="demo-note">Mode démo actif — aucune donnée n'est envoyée en ligne tant que Supabase n'est pas configuré (voir <span class="mono">js/config.js</span>).</p>
+  </section>
+
+  <!-- ================= APP (post-login) ================= -->
+  <div id="app-shell" class="hidden" style="display:flex; flex:1; min-height:100vh;">
+
+    <!-- Desktop sidebar -->
+    <nav class="sidebar desktop-only">
+      <img class="brand-mark" src="icons/icon-192.png" alt="Togevo" style="width:34px;height:34px;">
+      <button class="nav-btn" data-nav="home">🏠<span>Accueil</span></button>
+      <button class="nav-btn" data-nav="training">🏓<span>Entraînement</span></button>
+      <button class="nav-btn" data-nav="players">👥<span>Joueurs</span></button>
+      <button class="nav-btn" data-nav="trophies">🏆<span>Trophées</span></button>
+      <button class="nav-btn" data-nav="notifications">🔔<span>Notifs</span></button>
+      <button class="nav-btn" data-nav="profile">⚙️<span>Profil</span></button>
+    </nav>
+
+    <div class="main-col">
+      <header class="topbar">
+        <h1 id="topbar-title">Togevo</h1>
+        <div class="topbar-actions">
+          <div class="view-switch hidden" id="role-view-switch">
+            <button data-view="player">🏓 Mon entraînement</button>
+            <button data-view="coach">👨‍🏫 Mes joueurs</button>
+          </div>
+          <button class="icon-btn mobile-only" id="btn-open-notifs" aria-label="Notifications">🔔<span class="dot hidden" id="notif-dot"></span></button>
+          <button class="icon-btn mobile-only" id="btn-open-profile" aria-label="Profil">⚙️</button>
+        </div>
+      </header>
+
+      <main class="content">
+
+        <!-- ---------- VUE JOUEUR ---------- -->
+        <section id="view-player">
+          <div class="trajectory"><svg viewBox="0 0 400 26" preserveAspectRatio="none"><path d="M0 22 C 60 22, 90 2, 150 2 S 260 22, 400 4" fill="none" stroke="#DCE3E8" stroke-width="2" stroke-dasharray="1 6" stroke-linecap="round"/></svg></div>
+
+          <div class="stat-row" id="player-stats"></div>
+
+          <div class="section-title"><h2>Objectifs en cours</h2><span class="count" id="active-count"></span></div>
+          <div id="player-goals-active"></div>
+
+          <div id="player-suggestions-block" class="hidden">
+            <div class="section-title"><h2>Suggestions pour démarrer</h2></div>
+            <p style="font-size:13px;color:var(--ink-soft);margin:-4px 0 10px;">Tu n'as pas encore d'entraîneur sur Togevo : pioche une idée par catégorie.</p>
+            <div class="suggestion-grid" id="suggestion-grid"></div>
+          </div>
+
+          <div class="section-title"><h2>Progression</h2></div>
+          <div class="card chart-wrap">
+            <canvas id="progress-chart" height="160"></canvas>
+            <div class="chart-legend">
+              <span><span class="legend-dot" style="background:#2E5776"></span>Points AFTT</span>
+              <span><span class="legend-dot" style="background:#C97A2E"></span>Objectifs atteints</span>
+            </div>
+          </div>
+
+          <div class="section-title"><h2>Objectifs atteints</h2><span class="count" id="archived-count"></span></div>
+          <div id="player-goals-archived"></div>
+
+          <button class="btn btn-primary btn-block" id="btn-new-goal" style="margin-top:14px;">+ Nouvel objectif</button>
+        </section>
+
+        <!-- ---------- VUE ENTRAÎNEUR ---------- -->
+        <section id="view-coach" class="hidden">
+          <div class="coach-split">
+            <div class="players-panel">
+              <div class="breadcrumbs" id="coach-breadcrumbs"></div>
+              <div id="coach-groups-list"></div>
+              <button class="btn btn-secondary btn-block" id="btn-new-group" style="margin-top:6px;">+ Nouveau groupe</button>
+            </div>
+            <div class="detail-panel">
+              <div id="coach-detail-empty" class="card empty-state">
+                <span class="emoji">🏓</span>
+                <p>Choisis un groupe puis un·e joueur·se pour voir ses objectifs, ou ajoute ton premier joueur.</p>
+                <button class="btn btn-primary" id="btn-add-player-empty" style="margin-top:12px;">+ Ajouter un·e joueur·se</button>
+              </div>
+              <div id="coach-detail-content" class="hidden"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- TROPHÉES / GAMIFICATION ---------- -->
+        <section id="view-trophies" class="hidden">
+          <div id="trophies-mode-banner"></div>
+
+          <div class="section-title"><h2>Vitrine de trophées</h2></div>
+          <div id="trophy-privacy-note" class="hidden" style="font-size:12.5px;color:var(--ink-soft);margin:-6px 0 10px;">🔒 Vitrine privée — visible uniquement par toi et ton entraîneur.</div>
+          <div class="trophy-grid" id="trophy-grid"></div>
+
+          <div id="gamified-block" class="hidden">
+            <div class="section-title"><h2>Économie</h2></div>
+            <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:12.5px;color:var(--ink-soft);">Togecoins</div>
+                <div class="mono" style="font-size:22px;font-weight:700;color:var(--ball);display:flex;align-items:center;gap:6px;"><span class="coin-icon">T</span><span id="togecoins-balance">0</span></div>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btn-open-shop">🛍️ Boutique</button>
+            </div>
+
+            <div class="section-title"><h2>Amis</h2></div>
+            <div class="card">
+              <div class="field"><label>Ajouter un·e ami·e (pseudo, nom ou code)</label>
+                <div style="display:flex;gap:8px;">
+                  <input id="friend-search" placeholder="Ex : Luky, Sacha…" style="flex:1;">
+                  <button class="btn btn-secondary btn-sm" id="btn-friend-search">🔎</button>
+                </div>
+              </div>
+              <div id="friend-search-results"></div>
+            </div>
+            <div id="friend-requests-list"></div>
+            <div id="friends-list"></div>
+
+            <div class="section-title"><h2>Défis blagues reçus</h2></div>
+            <div id="challenges-list" class="card"></div>
+          </div>
+        </section>
+
+        <!-- ---------- NOTIFICATIONS (mobile plein écran) ---------- -->
+        <section id="view-notifications" class="hidden">
+          <h2 style="font-size:18px;margin-bottom:10px;">Notifications</h2>
+          <div id="notif-list" class="card"></div>
+        </section>
+
+        <!-- ---------- PROFIL ---------- -->
+        <section id="view-profile" class="hidden">
+          <h2 style="font-size:18px;margin-bottom:10px;">Mon profil</h2>
+          <div class="card">
+            <div class="field"><label>Prénom</label><input id="profile-first"></div>
+            <div class="field"><label>Nom</label><input id="profile-last"></div>
+            <div class="field"><label>Pseudo <span style="font-weight:400;color:var(--ink-soft);">(affiché aux autres joueurs, ton nom réel reste visible par ton·tes entraîneur·se·s)</span></label><input id="profile-pseudo" placeholder="Ex : Luky"></div>
+            <div class="field"><label>Téléphone (WhatsApp)</label><input id="profile-phone" type="tel"></div>
+            <div class="field"><label>Points AFTT actuels</label><input id="profile-aftt" type="number" inputmode="numeric"></div>
+            <div class="field">
+              <label>Rôles</label>
+              <div class="role-toggle">
+                <div class="chip-toggle" id="profile-role-player" data-role="player">🏓 Joueur·se</div>
+                <div class="chip-toggle" id="profile-role-coach" data-role="coach">👨‍🏫 Entraîneur·se</div>
+              </div>
+            </div>
+            <div class="field" id="profile-mode-field">
+              <label>Mode d'affichage</label>
+              <div class="role-toggle">
+                <div class="chip-toggle" id="profile-mode-focus" data-mode="focus">🎯 Focus (sobre)</div>
+                <div class="chip-toggle" id="profile-mode-gamified" data-mode="gamified">🎮 Gamifié (Togecoins, boutique)</div>
+              </div>
+            </div>
+            <div class="field">
+              <label>Vitrine de trophées</label>
+              <div class="role-toggle">
+                <div class="chip-toggle" id="profile-privacy-public" data-privacy="public">🌍 Publique</div>
+                <div class="chip-toggle" id="profile-privacy-private" data-privacy="private">🔒 Privée</div>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" id="btn-save-profile">Enregistrer</button>
+          </div>
+
+          <div class="section-title"><h2>Mes entraîneurs</h2></div>
+          <div id="my-coaches-list" class="card"></div>
+          <button class="btn btn-secondary btn-block" id="btn-find-coach">🔎 Chercher un entraîneur</button>
+
+          <button class="btn btn-danger btn-block" id="btn-stop-training" style="margin-top:22px;">Arrêter l'entraînement</button>
+          <button class="btn btn-ghost btn-block" id="btn-logout" style="margin-top:10px;">Se déconnecter</button>
+
+          <div class="section-title"><h2>Admin club (démo)</h2></div>
+          <button class="btn btn-secondary btn-block" id="btn-season-reset">🔁 Simuler la fin de saison (conversion des Togecoins)</button>
+        </section>
+
+      </main>
+
+      <!-- Mobile bottom nav -->
+      <nav class="bottom-nav mobile-only">
+        <button class="nav-btn active" data-nav="home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+          Accueil
+        </button>
+        <button class="nav-btn" data-nav="trophies">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a3 3 0 0 0 3 5M17 5h3a3 3 0 0 1-3 5"/></svg>
+          Trophées
+        </button>
+        <button class="nav-btn" data-nav="notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+          Notifs
+        </button>
+        <button class="nav-btn" data-nav="profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+          Profil
+        </button>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SHEET (modal générique) ================= -->
+<div class="sheet-backdrop" id="sheet-backdrop">
+  <div class="sheet" id="sheet-content" role="dialog" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div id="sheet-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/store.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
