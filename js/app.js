@@ -54,23 +54,66 @@
     });
   });
 
-  $("#btn-login").addEventListener("click", () => {
+  function setBtnLoading(btn, loading, labelWhenIdle) {
+    btn.disabled = loading;
+    btn.textContent = loading ? "Un instant…" : labelWhenIdle;
+  }
+
+  $("#btn-login").addEventListener("click", async () => {
     const email = $("#login-email").value.trim();
-    if (!email) { toast("Entre ton e-mail (mode démo : mot de passe libre)"); return; }
-    Store.login();
-    enterApp();
-  });
-  $("#btn-signup").addEventListener("click", () => {
-    const first_name = $("#su-first").value.trim() || "Nouveau";
-    const last_name = $("#su-last").value.trim() || "Membre";
-    const email = $("#su-email").value.trim();
-    const phone = $("#su-phone").value.trim();
-    if (!email) { toast("Renseigne un e-mail"); return; }
-    Store.signup({ first_name, last_name, email, phone, roles: signupRole });
+    const password = $("#login-pass").value;
+    if (!email || !password) { toast("E-mail et mot de passe requis"); return; }
+    const btn = $("#btn-login");
+    setBtnLoading(btn, true, "Se connecter");
+    const res = await Store.supabaseSignIn({ email, password });
+    setBtnLoading(btn, false, "Se connecter");
+    if (!res.ok) { toast(translateAuthError(res.error)); return; }
     enterApp();
   });
 
+  $("#btn-signup").addEventListener("click", async () => {
+    const first_name = $("#su-first").value.trim();
+    const last_name = $("#su-last").value.trim();
+    const email = $("#su-email").value.trim();
+    const password = $("#su-pass").value;
+    const phone = $("#su-phone").value.trim();
+    if (!first_name || !last_name || !email || !password) { toast("Prénom, nom, e-mail et mot de passe sont requis"); return; }
+    if (password.length < 6) { toast("Le mot de passe doit faire au moins 6 caractères"); return; }
+    const btn = $("#btn-signup");
+    setBtnLoading(btn, true, "Créer mon compte");
+    const res = await Store.supabaseSignUp({ first_name, last_name, email, phone, roles: signupRole, password });
+    setBtnLoading(btn, false, "Créer mon compte");
+    if (!res.ok) { toast(translateAuthError(res.error)); return; }
+    if (res.confirmed) { enterApp(); return; }
+    showEmailConfirmScreen(email);
+  });
+
+  function showEmailConfirmScreen(email) {
+    $("#auth-signup-form").classList.add("hidden");
+    $("#auth-login-form").classList.add("hidden");
+    $("#auth-confirm-email").classList.remove("hidden");
+    $("#confirm-email-address").textContent = email;
+  }
+  $("#btn-confirm-back-to-login").addEventListener("click", () => {
+    $("#auth-confirm-email").classList.add("hidden");
+    $("#auth-login-form").classList.remove("hidden");
+  });
+
+  function translateAuthError(msg) {
+    if (!msg) return "Une erreur est survenue, réessaie.";
+    const m = msg.toLowerCase();
+    if (m.includes("invalid login credentials")) return "E-mail ou mot de passe incorrect.";
+    if (m.includes("user already registered") || m.includes("already been registered")) return "Un compte existe déjà avec cet e-mail — connecte-toi plutôt.";
+    if (m.includes("email not confirmed")) return "Confirme d'abord ton e-mail (vérifie ta boîte de réception).";
+    if (m.includes("password should be at least")) return "Le mot de passe doit faire au moins 6 caractères.";
+    if (m.includes("rate limit")) return "Trop de tentatives, réessaie dans une minute.";
+    return msg;
+  }
+
+  let appEntered = false;
   function enterApp() {
+    if (appEntered) return;
+    appEntered = true;
     $("#screen-auth").classList.remove("active");
     $("#app-shell").classList.remove("hidden");
     const me = Store.getMe();
@@ -79,10 +122,24 @@
     renderAll();
   }
 
-  $("#btn-logout").addEventListener("click", () => {
-    Store.logout();
+  $("#btn-logout").addEventListener("click", async () => {
+    await Store.supabaseSignOut();
+    appEntered = false;
     $("#app-shell").classList.add("hidden");
     $("#screen-auth").classList.add("active");
+    $("#auth-confirm-email").classList.add("hidden");
+    $("#auth-login-form").classList.remove("hidden");
+    $("#auth-signup-form").classList.add("hidden");
+  });
+
+  // Connexion réelle : dès que le SDK Supabase est prêt, on écoute les
+  // changements de session (connexion, restauration au rechargement de la
+  // page, retour depuis le lien de confirmation d'e-mail) pour entrer
+  // automatiquement dans l'appli si un compte réel est déjà authentifié.
+  document.addEventListener("togevo:supabase-ready", () => {
+    Store.watchSupabaseAuth((profile) => {
+      if (profile) enterApp();
+    });
   });
 
   // ---------------- Role switch (compte joueur + entraîneur) ----------------
@@ -809,8 +866,8 @@
   }
 
   // ---------------- Démarrage ----------------
-  // Le mode démo pré-connecte directement Camille pour montrer l'appli tout de suite.
-  if (window.TOGEVO_CONFIG.DEMO_MODE) {
-    enterApp();
-  }
+  // Le démarrage se fait maintenant via la vraie session Supabase (voir
+  // l'écouteur "togevo:supabase-ready" plus haut) : si l'utilisateur a déjà
+  // une session valide (reconnexion automatique), l'appli s'ouvre directement ;
+  // sinon l'écran de connexion (déjà affiché par défaut) reste visible.
 })();

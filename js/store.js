@@ -131,22 +131,85 @@ const Store = (function () {
   function persist() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
   function resetDemo() { db = seedDB(); persist(); }
 
-  // ---------- Auth (démo : accepte tout identifiant, connecte le compte démo) ----------
-  function login() { return getMe(); }
-  function signup({ first_name, last_name, email, phone, roles }) {
-    const id = uid();
-    db.profiles[id] = {
-      id, first_name, last_name, email, phone: phone || "",
-      is_player: roles === "player" || roles === "both",
-      is_coach: roles === "coach" || roles === "both",
-      aftt_points: null
-    };
+  // ---------- Auth ----------
+  // Connexion/inscription réelles via Supabase Auth (si configuré — voir
+  // js/config.js et js/supabase-client.js). Le PROFIL (nom, groupes,
+  // objectifs, etc.) continue pour l'instant à vivre en local, mais est
+  // désormais indexé sur le vrai identifiant Supabase de l'utilisateur,
+  // ce qui permettra de basculer chaque partie sur de vraies tables une
+  // par une sans jamais changer les identifiants déjà en usage.
+
+  function isSupabaseReady() { return !!window.togevoSupabase; }
+
+  // Crée (ou retrouve) le profil local correspondant à un utilisateur Supabase Auth
+  function ensureLocalProfile(supabaseUser, extra) {
+    extra = extra || {};
+    const id = supabaseUser.id;
+    if (!db.profiles[id]) {
+      const meta = supabaseUser.user_metadata || {};
+      db.profiles[id] = {
+        id,
+        first_name: meta.first_name || extra.first_name || "Prénom",
+        last_name: meta.last_name || extra.last_name || "Nom",
+        pseudo: meta.pseudo || "",
+        email: supabaseUser.email || extra.email || "",
+        phone: meta.phone || extra.phone || "",
+        is_player: meta.is_player ?? extra.is_player ?? true,
+        is_coach: meta.is_coach ?? extra.is_coach ?? false,
+        aftt_points: null,
+        display_mode: "focus",
+        trophy_privacy: "public",
+        togecoins: 0,
+        owned_cosmetics: [],
+        active_theme: null,
+        active_frame: null
+      };
+    }
     db.currentUserId = id;
     persist();
     return db.profiles[id];
   }
+
+  async function supabaseSignUp({ first_name, last_name, email, phone, roles, password }) {
+    if (!isSupabaseReady()) return { ok: false, error: "Connexion au serveur indisponible pour le moment. Réessaie dans un instant." };
+    const is_player = roles === "player" || roles === "both";
+    const is_coach = roles === "coach" || roles === "both";
+    const { data, error } = await window.togevoSupabase.auth.signUp({
+      email, password,
+      options: { data: { first_name, last_name, phone: phone || "", is_player, is_coach } }
+    });
+    if (error) return { ok: false, error: error.message };
+    if (data.session && data.user) {
+      ensureLocalProfile(data.user, { first_name, last_name, phone, is_player, is_coach, email });
+      return { ok: true, confirmed: true };
+    }
+    // Pas de session retournée : la confirmation par e-mail est activée sur le projet
+    return { ok: true, confirmed: false };
+  }
+
+  async function supabaseSignIn({ email, password }) {
+    if (!isSupabaseReady()) return { ok: false, error: "Connexion au serveur indisponible pour le moment. Réessaie dans un instant." };
+    const { data, error } = await window.togevoSupabase.auth.signInWithPassword({ email, password });
+    if (error) return { ok: false, error: error.message };
+    ensureLocalProfile(data.user);
+    return { ok: true };
+  }
+
+  async function supabaseSignOut() {
+    if (isSupabaseReady()) await window.togevoSupabase.auth.signOut();
+  }
+
+  // Écoute les changements de session (connexion, déconnexion, restauration
+  // au rechargement de page, retour depuis le lien de confirmation e-mail).
+  function watchSupabaseAuth(onChange) {
+    if (!isSupabaseReady()) return;
+    window.togevoSupabase.auth.onAuthStateChange((event, session) => {
+      if (session && session.user) onChange(ensureLocalProfile(session.user));
+      else if (event === "SIGNED_OUT") onChange(null);
+    });
+  }
+
   function getMe() { return db.profiles[db.currentUserId]; }
-  function logout() { /* démo : ne fait rien de destructif */ }
 
   function saveProfile(patch) {
     Object.assign(db.profiles[db.currentUserId], patch);
@@ -465,7 +528,8 @@ const Store = (function () {
 
   load();
   return {
-    resetDemo, login, signup, getMe, logout, saveProfile, getProfile,
+    resetDemo, getMe, saveProfile, getProfile,
+    supabaseSignUp, supabaseSignIn, supabaseSignOut, watchSupabaseAuth,
     getMyCoaches, getMyPlayers, leaveCoach, removePlayer, stopTrainingEntirely, fullName,
     getGroups, addGroup, renameGroup, deleteGroup, setGroupWhatsapp, getGroupMembers,
     addPlayerToGroup, removePlayerFromGroup, getPlayerGroups, inviteNewPlayer, addExistingPlayer,

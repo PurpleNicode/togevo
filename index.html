@@ -54,8 +54,13 @@
         <button class="btn btn-primary" id="btn-signup">Créer mon compte</button>
         <p class="auth-switch">Déjà un compte ? <button id="go-login">Se connecter</button></p>
       </div>
+      <div id="auth-confirm-email" class="hidden">
+        <h1>Vérifie ta boîte e-mail 📬</h1>
+        <p class="auth-sub">On a envoyé un lien de confirmation à <strong id="confirm-email-address"></strong>. Clique dessus pour activer ton compte, puis reviens ici te connecter.</p>
+        <button class="btn btn-secondary btn-block" id="btn-confirm-back-to-login">Retour à la connexion</button>
+      </div>
     </div>
-    <p class="demo-note">Mode démo actif — aucune donnée n'est envoyée en ligne tant que Supabase n'est pas configuré (voir <span class="mono">js/config.js</span>).</p>
+    <p class="demo-note">Connexion réelle activée — crée ton compte pour commencer. Les groupes, objectifs et trophées restent pour l'instant des données de démonstration locales, en attendant leur migration complète.</p>
   </section>
 
   <!-- ================= APP (post-login) ================= -->

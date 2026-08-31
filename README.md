@@ -36,6 +36,38 @@ joueuse **et** entraîneuse) avec des données d'exemple générées en local
 (`localStorage`). Tu peux basculer entre "Mon entraînement" et "Mes joueurs"
 en haut de l'écran pour voir les deux points de vue.
 
+## État actuel du backend (important)
+
+**L'authentification est maintenant réelle**, branchée sur ton projet Supabase :
+créer un compte, se connecter, se déconnecter passent par de vrais comptes
+Supabase Auth (avec confirmation par e-mail si activée sur ton projet).
+
+**Le reste des données (groupes, objectifs, trophées, amis, Togecoins...)
+fonctionne encore en local (`localStorage`)**, par choix : migrer tout d'un
+coup était trop risqué à tester à distance. Un compte fraîchement créé démarre
+donc "vide" (pas d'objectif, pas de groupe) — c'est normal et attendu, ce
+sera comblé au fur et à mesure que chaque partie sera migrée vers de vraies
+tables Supabase.
+
+Concrètement, `js/store.js` mélange donc deux mondes :
+- Les fonctions `supabaseSignUp` / `supabaseSignIn` / `supabaseSignOut` /
+  `watchSupabaseAuth` parlent à Supabase Auth pour de vrai.
+- `ensureLocalProfile` crée un profil local (dans le navigateur) indexé sur
+  le vrai identifiant Supabase de l'utilisateur — ce qui permettra, à chaque
+  prochaine étape de migration, de brancher une table Supabase de plus sans
+  jamais changer les identifiants déjà utilisés partout dans le code.
+- Toutes les autres fonctions (`getGroups`, `addGoal`, `getFriends`, etc.)
+  continuent d'utiliser `localStorage` comme avant.
+
+### Prochaines étapes de migration (dans l'ordre conseillé)
+
+1. Table `profiles` (nom, pseudo, mode, vie privée, Togecoins) → remplace `ensureLocalProfile`/`saveProfile`
+2. `coach_player_links` + invitations de joueurs par un coach
+3. `groups` / `group_members`
+4. `goals` (le cœur de l'appli)
+5. `notifications`
+6. Amis, défis blagues, boutique/trophées (moins prioritaire, peut rester local plus longtemps)
+
 ## Passer en production avec Supabase
 
 1. Crée un projet sur [supabase.com](https://supabase.com), région **Frankfurt** (RGPD).
