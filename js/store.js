@@ -176,7 +176,9 @@ const Store = (function () {
     const is_coach = roles === "coach" || roles === "both";
     const { data, error } = await window.togevoSupabase.auth.signUp({
       email, password,
-      options: { data: { first_name, last_name, phone: phone || "", is_player, is_coach } }
+      options: { 
+        emailRedirectTo: 'https://purplenicode.github.io/togevo/success.html',
+        data: { first_name, last_name, phone: phone || "", is_player, is_coach } }
     });
     if (error) return { ok: false, error: error.message };
     if (data.session && data.user) {
