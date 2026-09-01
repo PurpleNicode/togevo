@@ -132,42 +132,100 @@ const Store = (function () {
   function resetDemo() { db = seedDB(); persist(); }
 
   // ---------- Auth ----------
-  // Connexion/inscription réelles via Supabase Auth (si configuré — voir
-  // js/config.js et js/supabase-client.js). Le PROFIL (nom, groupes,
-  // objectifs, etc.) continue pour l'instant à vivre en local, mais est
-  // désormais indexé sur le vrai identifiant Supabase de l'utilisateur,
-  // ce qui permettra de basculer chaque partie sur de vraies tables une
-  // par une sans jamais changer les identifiants déjà en usage.
+  // Connexion/inscription réelles via Supabase Auth.
+  // Étape 1 : le profil identitaire (nom, rôles, pseudo, mode, AFTT) est
+  // lu/écrit dans public.profiles. Le reste (groupes, objectifs, Togecoins…)
+  // reste en localStorage, indexé sur le vrai UUID Auth.
 
   function isSupabaseReady() { return !!window.togevoSupabase; }
 
-  // Crée (ou retrouve) le profil local correspondant à un utilisateur Supabase Auth
-  function ensureLocalProfile(supabaseUser, extra) {
+  function defaultLocalProfile(supabaseUser, extra) {
     extra = extra || {};
+    const meta = supabaseUser.user_metadata || {};
+    return {
+      id: supabaseUser.id,
+      first_name: meta.first_name || extra.first_name || "Prénom",
+      last_name: meta.last_name || extra.last_name || "Nom",
+      pseudo: meta.pseudo || extra.pseudo || "",
+      email: supabaseUser.email || extra.email || "",
+      phone: meta.phone || extra.phone || "",
+      is_player: meta.is_player ?? extra.is_player ?? true,
+      is_coach: meta.is_coach ?? extra.is_coach ?? false,
+      aftt_points: extra.aftt_points ?? null,
+      display_mode: extra.display_mode || "focus",
+      trophy_privacy: extra.trophy_privacy || "public",
+      togecoins: extra.togecoins || 0,
+      owned_cosmetics: extra.owned_cosmetics || [],
+      active_theme: extra.active_theme || null,
+      active_frame: extra.active_frame || null
+    };
+  }
+
+  function ensureLocalProfile(supabaseUser, extra) {
     const id = supabaseUser.id;
     if (!db.profiles[id]) {
-      const meta = supabaseUser.user_metadata || {};
-      db.profiles[id] = {
-        id,
-        first_name: meta.first_name || extra.first_name || "Prénom",
-        last_name: meta.last_name || extra.last_name || "Nom",
-        pseudo: meta.pseudo || "",
-        email: supabaseUser.email || extra.email || "",
-        phone: meta.phone || extra.phone || "",
-        is_player: meta.is_player ?? extra.is_player ?? true,
-        is_coach: meta.is_coach ?? extra.is_coach ?? false,
-        aftt_points: null,
-        display_mode: "focus",
-        trophy_privacy: "public",
-        togecoins: 0,
-        owned_cosmetics: [],
-        active_theme: null,
-        active_frame: null
-      };
+      db.profiles[id] = defaultLocalProfile(supabaseUser, extra);
     }
     db.currentUserId = id;
     persist();
     return db.profiles[id];
+  }
+
+  function profileToRow(p) {
+    return {
+      id: p.id,
+      first_name: p.first_name,
+      last_name: p.last_name,
+      email: p.email || "",
+      phone: p.phone || null,
+      is_player: !!p.is_player,
+      is_coach: !!p.is_coach,
+      aftt_points: p.aftt_points == null || p.aftt_points === "" ? null : Number(p.aftt_points),
+      pseudo: p.pseudo || "",
+      display_mode: p.display_mode === "gamified" ? "gamified" : "focus",
+      trophy_privacy: p.trophy_privacy === "private" ? "private" : "public"
+    };
+  }
+
+  function applyRemoteProfile(id, row) {
+    const local = db.profiles[id] || {};
+    db.profiles[id] = {
+      ...local,
+      id,
+      first_name: row.first_name,
+      last_name: row.last_name,
+      email: row.email || "",
+      phone: row.phone || "",
+      is_player: !!row.is_player,
+      is_coach: !!row.is_coach,
+      aftt_points: row.aftt_points == null ? null : row.aftt_points,
+      pseudo: row.pseudo || "",
+      display_mode: row.display_mode === "gamified" ? "gamified" : "focus",
+      trophy_privacy: row.trophy_privacy === "private" ? "private" : "public",
+      togecoins: local.togecoins || 0,
+      owned_cosmetics: local.owned_cosmetics || [],
+      active_theme: local.active_theme || null,
+      active_frame: local.active_frame || null
+    };
+  }
+
+  async function hydrateProfileFromSupabase(supabaseUser, extra) {
+    const local = ensureLocalProfile(supabaseUser, extra);
+    if (!isSupabaseReady()) return local;
+    const sb = window.togevoSupabase;
+    const { data, error } = await sb.from("profiles").select("*").eq("id", supabaseUser.id).maybeSingle();
+    if (error) {
+      console.error("Togevo : lecture du profil Supabase", error);
+      return local;
+    }
+    if (data) {
+      applyRemoteProfile(supabaseUser.id, data);
+      persist();
+      return db.profiles[supabaseUser.id];
+    }
+    const { error: insErr } = await sb.from("profiles").insert(profileToRow(local));
+    if (insErr) console.error("Togevo : création du profil Supabase", insErr);
+    return db.profiles[supabaseUser.id];
   }
 
   async function supabaseSignUp({ first_name, last_name, email, phone, roles, password }) {
@@ -182,7 +240,7 @@ const Store = (function () {
     });
     if (error) return { ok: false, error: error.message };
     if (data.session && data.user) {
-      ensureLocalProfile(data.user, { first_name, last_name, phone, is_player, is_coach, email });
+      await hydrateProfileFromSupabase(data.user, { first_name, last_name, phone, is_player, is_coach, email });
       return { ok: true, confirmed: true };
     }
     // Pas de session retournée : la confirmation par e-mail est activée sur le projet
@@ -193,7 +251,7 @@ const Store = (function () {
     if (!isSupabaseReady()) return { ok: false, error: "Connexion au serveur indisponible pour le moment. Réessaie dans un instant." };
     const { data, error } = await window.togevoSupabase.auth.signInWithPassword({ email, password });
     if (error) return { ok: false, error: error.message };
-    ensureLocalProfile(data.user);
+    await hydrateProfileFromSupabase(data.user);
     return { ok: true };
   }
 
@@ -206,17 +264,27 @@ const Store = (function () {
   function watchSupabaseAuth(onChange) {
     if (!isSupabaseReady()) return;
     window.togevoSupabase.auth.onAuthStateChange((event, session) => {
-      if (session && session.user) onChange(ensureLocalProfile(session.user));
-      else if (event === "SIGNED_OUT") onChange(null);
+      if (session && session.user) {
+        hydrateProfileFromSupabase(session.user).then((profile) => onChange(profile));
+      } else if (event === "SIGNED_OUT") onChange(null);
     });
   }
 
   function getMe() { return db.profiles[db.currentUserId]; }
 
-  function saveProfile(patch) {
-    Object.assign(db.profiles[db.currentUserId], patch);
+  async function saveProfile(patch) {
+    const id = db.currentUserId;
+    const next = { ...db.profiles[id], ...patch };
+    if (isSupabaseReady()) {
+      const { error } = await window.togevoSupabase.from("profiles").upsert(profileToRow(next), { onConflict: "id" });
+      if (error) {
+        console.error("Togevo : enregistrement du profil", error);
+        return { ok: false, error: error.message };
+      }
+    }
+    Object.assign(db.profiles[id], patch);
     persist();
-    return getMe();
+    return { ok: true, profile: getMe() };
   }
 
   // ---------- Profils ----------

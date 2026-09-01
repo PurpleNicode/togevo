@@ -9,9 +9,10 @@
 
   let state = {
     role: "player",          // vue active : player | coach
-    nav: "home",             // home | notifications | profile
+    nav: "home",             // home | notifications | profile | social
     selectedGroupId: null,
-    selectedPlayerId: null
+    selectedPlayerId: null,
+    socialTab: "trophies"    // trophies | friends | shop
   };
 
   // ---------------- Utils ----------------
@@ -115,6 +116,7 @@
     if (appEntered) return;
     appEntered = true;
     $("#screen-auth").classList.remove("active");
+    $("#screen-auth").classList.add("hidden");
     $("#app-shell").classList.remove("hidden");
     const me = Store.getMe();
     state.role = me.is_player ? "player" : "coach";
@@ -126,6 +128,7 @@
     await Store.supabaseSignOut();
     appEntered = false;
     $("#app-shell").classList.add("hidden");
+    $("#screen-auth").classList.remove("hidden");
     $("#screen-auth").classList.add("active");
     $("#auth-confirm-email").classList.add("hidden");
     $("#auth-login-form").classList.remove("hidden");
@@ -138,7 +141,10 @@
   // automatiquement dans l'appli si un compte réel est déjà authentifié.
   document.addEventListener("togevo:supabase-ready", () => {
     Store.watchSupabaseAuth((profile) => {
-      if (profile) enterApp();
+      if (profile) {
+        if (appEntered) renderAll();
+        else enterApp();
+      }
     });
   });
 
@@ -179,12 +185,12 @@
     $("#view-coach").classList.add("hidden");
     $("#view-notifications").classList.add("hidden");
     $("#view-profile").classList.add("hidden");
-    $("#view-trophies").classList.add("hidden");
+    $("#view-social").classList.add("hidden");
     $("#role-view-switch").classList.toggle("hidden", !(Store.getMe().is_player && Store.getMe().is_coach) || state.nav !== "home");
 
     if (state.nav === "notifications") { $("#topbar-title").textContent = "Notifications"; $("#view-notifications").classList.remove("hidden"); renderNotifications(); }
     else if (state.nav === "profile") { $("#topbar-title").textContent = "Profil"; $("#view-profile").classList.remove("hidden"); renderProfile(); }
-    else if (state.nav === "trophies") { $("#topbar-title").textContent = "Trophées"; $("#view-trophies").classList.remove("hidden"); renderTrophies(); }
+    else if (state.nav === "social") { $("#topbar-title").textContent = "Social"; $("#view-social").classList.remove("hidden"); renderSocial(); }
     else {
       $("#topbar-title").textContent = "Togevo";
       if (state.role === "coach") { $("#view-coach").classList.remove("hidden"); renderCoach(); }
@@ -672,8 +678,10 @@
     }, true);
   });
   $$("#profile-role-player, #profile-role-coach").forEach(el => el.addEventListener("click", () => el.classList.toggle("selected")));
-  $("#btn-save-profile").addEventListener("click", () => {
-    Store.saveProfile({
+  $("#btn-save-profile").addEventListener("click", async () => {
+    const btn = $("#btn-save-profile");
+    setBtnLoading(btn, true, "Enregistrer");
+    const res = await Store.saveProfile({
       first_name: $("#profile-first").value.trim(), last_name: $("#profile-last").value.trim(),
       pseudo: $("#profile-pseudo").value.trim(),
       phone: $("#profile-phone").value.trim(), aftt_points: Number($("#profile-aftt").value) || null,
@@ -682,6 +690,13 @@
       display_mode: $("#profile-mode-gamified").classList.contains("selected") ? "gamified" : "focus",
       trophy_privacy: $("#profile-privacy-private").classList.contains("selected") ? "private" : "public"
     });
+    setBtnLoading(btn, false, "Enregistrer");
+    if (!res.ok) {
+      toast(res.error && res.error.includes("display_mode")
+        ? "Le schéma Supabase n'est pas à jour. Exécute supabase/migrations/001_profiles.sql dans l'éditeur SQL."
+        : (res.error || "Impossible d'enregistrer le profil (réseau ou schéma)."));
+      return;
+    }
     setupRoleSwitch();
     toast("Profil enregistré");
   });
@@ -695,18 +710,35 @@
   });
 
   // ============================================================
-  // TROPHÉES / GAMIFICATION
+  // SOCIAL (Trophées / Amis / Boutique)
   // ============================================================
-  function renderTrophies() {
+  function renderSocial() {
     const me = Store.getMe();
     if (me.is_player) Store.checkAchievements(me.id);
     const gamified = me.display_mode === "gamified";
 
-    $("#trophies-mode-banner").innerHTML = gamified
-      ? `<div class="mode-banner gamified">🎮 Mode Gamifié actif — crédits, boutique et défis entre ami·es débloqués. Passe en Mode Focus depuis ton profil si tu préfères une vue sobre.</div>`
-      : `<div class="mode-banner focus">🎯 Mode Focus — vitrine de trophées et statistiques, sans gadgets. Active le Mode Gamifié depuis ton profil pour débloquer crédits et boutique.</div>`;
+    applySocialSubtab();
 
-    const canView = Store.canViewTrophyCase(me.id, me.id);
+    $("#trophies-mode-banner").innerHTML = gamified
+      ? `<div class="mode-banner gamified">🎮 Mode Gamifié actif — Togecoins, boutique et défis entre ami·es débloqués. Passe en Mode Focus depuis ton profil si tu préfères une vue sobre.</div>`
+      : `<div class="mode-banner focus">🎯 Mode Focus — vitrine de trophées et statistiques, sans gadgets. Active le Mode Gamifié depuis ton profil pour débloquer Togecoins et boutique.</div>`;
+
+    renderSocialTrophies();
+    renderFriendsAndChallenges(gamified);
+    renderShop(gamified);
+  }
+
+  $$("#social-subtabs button[data-subtab]").forEach(b => b.addEventListener("click", () => {
+    state.socialTab = b.dataset.subtab;
+    applySocialSubtab();
+  }));
+  function applySocialSubtab() {
+    $$("#social-subtabs button[data-subtab]").forEach(b => b.classList.toggle("active", b.dataset.subtab === state.socialTab));
+    ["trophies", "friends", "shop"].forEach(t => $(`#social-tab-${t}`).classList.toggle("hidden", t !== state.socialTab));
+  }
+
+  function renderSocialTrophies() {
+    const me = Store.getMe();
     $("#trophy-privacy-note").classList.toggle("hidden", me.trophy_privacy !== "private");
     const trophies = Store.getTrophyCase(me.id);
     $("#trophy-grid").innerHTML = trophies.map(t => `
@@ -716,50 +748,50 @@
         ${t.unlocked ? `<div class="t-date">${new Date(t.unlocked_at).toLocaleDateString("fr-BE")}</div>` : `<div class="t-date">Verrouillé</div>`}
       </div>
     `).join("");
+  }
 
-    $("#gamified-block").classList.toggle("hidden", !gamified);
+  function renderShop(gamified) {
+    const me = Store.getMe();
+    $("#shop-locked-note").classList.toggle("hidden", gamified);
+    $("#shop-unlocked-content").classList.toggle("hidden", !gamified);
     if (!gamified) return;
 
     $("#togecoins-balance").textContent = me.togecoins ?? 0;
-    renderFriendsAndChallenges();
-  }
-
-  $("#btn-open-shop").addEventListener("click", () => openShopSheet());
-  function openShopSheet() {
-    const me = Store.getMe();
     const catalog = Store.getShopCatalog();
-    openSheet(`
-      <h2>Boutique — <span class="mono" style="color:var(--ball);">${me.togecoins ?? 0}</span> crédits</h2>
-      <div class="shop-grid">
-        ${catalog.map(item => {
-          const owned = (me.owned_cosmetics || []).includes(item.id);
-          const active = (item.type === "theme" ? me.active_theme : me.active_frame) === item.id;
-          return `<div class="shop-item">
-            <div class="shop-swatch" style="background:${item.preview}"></div>
-            <div class="name">${escapeHTML(item.name)}</div>
-            ${owned ? `<div class="cost">Possédé</div><button class="btn ${active ? "btn-secondary" : "btn-primary"} btn-sm btn-block" data-equip="${item.id}" data-type="${item.type}">${active ? "Équipé ✓" : "Équiper"}</button>`
-                    : `<div class="cost">${item.cost} crédits</div><button class="btn btn-primary btn-sm btn-block" data-buy="${item.id}">Acheter</button>`}
-          </div>`;
-        }).join("")}
+    $("#shop-grid").innerHTML = catalog.map(item => {
+      const owned = (me.owned_cosmetics || []).includes(item.id);
+      const active = (item.type === "theme" ? me.active_theme : me.active_frame) === item.id;
+      return `<div class="shop-item">
+        <div class="shop-swatch" style="background:${item.preview}"></div>
+        <div class="name">${escapeHTML(item.name)}</div>
+        ${owned ? `<div class="cost">Possédé</div><button class="btn ${active ? "btn-secondary" : "btn-primary"} btn-sm btn-block" data-equip="${item.id}" data-type="${item.type}">${active ? "Équipé ✓" : "Équiper"}</button>`
+                : `<div class="cost"><span class="coin-icon sm">T</span> ${item.cost} Togecoins</div><button class="btn btn-primary btn-sm btn-block" data-buy="${item.id}">Acheter</button>`}
+      </div>`;
+    }).join("");
+    $$("[data-buy]", $("#shop-grid")).forEach(b => b.addEventListener("click", () => {
+      const res = Store.buyCosmetic(me.id, b.dataset.buy);
+      if (!res.ok) { toast(res.error === "Crédits insuffisants" ? "Pas assez de Togecoins" : res.error); return; }
+      toast("Objet acheté !");
+      renderShop(true);
+    }));
+    $$("[data-equip]", $("#shop-grid")).forEach(b => b.addEventListener("click", () => {
+      Store.setActiveCosmetic(me.id, b.dataset.type, b.dataset.equip);
+      toast("Objet équipé");
+      renderShop(true); renderAll();
+    }));
+
+    const received = Store.getReceivedChallenges(me.id);
+    $("#challenges-list").innerHTML = received.length ? received.map(c => `
+      <div class="challenge-item">
+        <div>😂 <strong>${escapeHTML(Store.displayName(c.from))}</strong> t'a envoyé : "${escapeHTML(c.message)}"</div>
+        <div class="time">${new Date(c.created_at).toLocaleDateString("fr-BE", { day: "numeric", month: "short" })}</div>
       </div>
-      <p style="font-size:11.5px;color:var(--ink-soft);margin-top:12px;">Les crédits se gagnent en atteignant des objectifs et en débloquant des trophées. Ils sont partiellement reconvertis en début de nouvelle saison pour garder le jeu équilibré.</p>
-    `, (root) => {
-      $$("[data-buy]", root).forEach(b => b.addEventListener("click", () => {
-        const res = Store.buyCosmetic(me.id, b.dataset.buy);
-        if (!res.ok) { toast(res.error === "Crédits insuffisants" ? "Pas assez de crédits" : res.error); return; }
-        toast("Objet acheté !");
-        closeSheet(); openShopSheet(); renderTrophies();
-      }));
-      $$("[data-equip]", root).forEach(b => b.addEventListener("click", () => {
-        Store.setActiveCosmetic(me.id, b.dataset.type, b.dataset.equip);
-        toast("Objet équipé");
-        closeSheet(); openShopSheet(); renderAll();
-      }));
-    });
+    `).join("") : `<div class="empty-state"><span class="emoji">😂</span><p>Aucun défi blague reçu pour l'instant.</p></div>`;
   }
 
-  function renderFriendsAndChallenges() {
+  function renderFriendsAndChallenges(gamified) {
     const me = Store.getMe();
+    if (gamified === undefined) gamified = me.display_mode === "gamified";
     const pending = Store.getPendingFriendRequests(me.id);
     const requestsBox = document.getElementById("friend-requests-list");
     if (requestsBox) {
@@ -793,19 +825,11 @@
         <div class="card player-row" data-friend="${f.id}" style="margin-bottom:8px;">
           <div class="avatar ${frameClass(f)}">${initials(f)}</div>
           <div class="info"><div class="name">${escapeHTML(f.pseudo || Store.displayName(f.id))}</div><div class="sub">${f.aftt_points ?? "—"} pts AFTT</div></div>
-          <button class="btn btn-secondary btn-sm" data-joke="${f.id}">😂 Défi</button>
+          ${gamified ? `<button class="btn btn-secondary btn-sm" data-joke="${f.id}">😂 Défi</button>` : ""}
         </div>
       `).join("")}
     ` : `<p style="font-size:12.5px;color:var(--ink-soft);">Pas encore d'ami·e — rapprochement automatique via tes groupes, ou cherche quelqu'un ci-dessus.</p>`;
     $$("[data-joke]", $("#friends-list")).forEach(b => b.addEventListener("click", () => openJokeChallengeSheet(b.dataset.joke)));
-
-    const received = Store.getReceivedChallenges(me.id);
-    $("#challenges-list").innerHTML = received.length ? received.map(c => `
-      <div class="challenge-item">
-        <div>😂 <strong>${escapeHTML(Store.displayName(c.from))}</strong> t'a envoyé : "${escapeHTML(c.message)}"</div>
-        <div class="time">${new Date(c.created_at).toLocaleDateString("fr-BE", { day: "numeric", month: "short" })}</div>
-      </div>
-    `).join("") : `<div class="empty-state"><span class="emoji">😂</span><p>Aucun défi blague reçu pour l'instant.</p></div>`;
   }
 
   $("#btn-friend-search").addEventListener("click", () => {

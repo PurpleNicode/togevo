@@ -16,6 +16,9 @@ create table public.profiles (
   is_coach boolean not null default false,
   sport text not null default 'tennis_de_table',
   aftt_points int,
+  pseudo text not null default '',
+  display_mode text not null default 'focus' check (display_mode in ('focus', 'gamified')),
+  trophy_privacy text not null default 'public' check (trophy_privacy in ('public', 'private')),
   created_at timestamptz not null default now()
 );
 
@@ -32,6 +35,35 @@ create policy "Un utilisateur modifie son propre profil"
 create policy "Un utilisateur crée son propre profil"
   on public.profiles for insert
   with check (auth.uid() = id);
+
+-- Profil créé automatiquement à l'inscription (y compris avant confirmation e-mail)
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (
+    id, first_name, last_name, email, phone, is_player, is_coach
+  ) values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'first_name', 'Prénom'),
+    coalesce(new.raw_user_meta_data->>'last_name', 'Nom'),
+    coalesce(new.email, ''),
+    nullif(new.raw_user_meta_data->>'phone', ''),
+    coalesce((new.raw_user_meta_data->>'is_player')::boolean, true),
+    coalesce((new.raw_user_meta_data->>'is_coach')::boolean, false)
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
 
 -- ---------- LIEN COACH <-> JOUEUR ----------
 create type link_status as enum ('pending', 'active', 'left', 'removed');
