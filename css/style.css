@@ -415,10 +415,10 @@ a{ color:inherit; }
 .hidden { display: none !important; }
 
 /* ============================================================
-   CORRECTIFS MOBILE (Scroll, Largeur & Conteneurs)
+   CORRECTIFS UNIFIÉS (PC & Mobile : Barre du bas unique)
    ============================================================ */
 
-/* 1. Verrouillage strict de la largeur d'écran */
+/* 1. Verrouillage de la largeur et réinitialisation de la mise en page */
 html, body {
   max-width: 100vw !important;
   overflow-x: hidden !important;
@@ -428,46 +428,49 @@ html, body {
 }
 
 *, *:before, *:after {
-  box-sizing: border-box !important; /* Force tout le monde à respecter les limites */
+  box-sizing: border-box !important;
 }
 
 body {
   overscroll-behavior-y: none;
 }
 
-/* 2. Scroll vertical avec marges symétriques (gauche & droite) */
+/* Force un affichage vertical (colonne) sur TOUS les écrans */
 #app {
+  display: flex !important;
+  flex-direction: column !important;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
   overflow-x: hidden;
 }
 
+/* 2. Suppression définitive de la barre latérale sur PC */
+.sidebar {
+  display: none !important;
+}
+
+/* 3. Zone de contenu centrée avec marges équilibrées */
 .content {
   flex: 1;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch;
   
-  /* Marges internes identiques à gauche et à droite (16px) */
   padding-left: 16px !important;
   padding-right: 16px !important;
   padding-top: 16px !important;
   padding-bottom: calc(var(--nav-h) + 40px) !important;
   
   width: 100% !important;
-  max-width: 100vw !important;
-  box-sizing: border-box !important;
+  max-width: 920px !important; /* Limite la largeur sur grand écran pour rester lisible */
+  margin: 0 auto !important;   /* Centre le contenu sur PC */
 }
 
-/* 3. Sécurisation des cartes pour qu'elles s'alignent sur les marges du contenu */
+/* 4. Cartes et groupes de boutons */
 .card, .auth-card, .stat-card, .suggestion-chip, .goal-card, .sheet {
   width: 100% !important;
   max-width: 100% !important;
-  box-sizing: border-box !important;
 }
 
-/* 4. Gestion des groupes de boutons */
 .goal-actions, .sheet-actions, .role-toggle, .stat-row {
   display: flex !important;
   flex-wrap: wrap !important;
@@ -492,7 +495,7 @@ body {
   word-break: break-word;
 }
 
-/* 5. Barre de navigation bas */
+/* 5. Barre du bas unique (Mobile & PC) */
 .bottom-nav {
   display: flex !important;
   flex-direction: row !important;
@@ -504,7 +507,7 @@ body {
   right: 0 !important;
   bottom: 0 !important;
   position: fixed !important;
-  box-sizing: border-box;
+  z-index: 1000 !important;
 }
 
 .bottom-nav .nav-btn,
@@ -525,4 +528,24 @@ body {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   max-width: 100% !important;
+}
+
+/* Intégration du logo dans la topbar */
+.topbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.topbar::before {
+  content: "";
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  background-image: url('../icons/icon-192.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  flex-shrink: 0;
+}
 }
