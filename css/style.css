@@ -1,94 +1,113 @@
 /* ============================================================
-   TOGEVO — Style Unifié Correctif Mobile & Connexion
+   TOGEVO — Design System & Correctif Structurel
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
 :root {
-  --teal-900:#0B1A2C;
-  --teal-800:#123049;
-  --teal-600:#2E5776;
-  --teal-500:#3F7091;
-  --mint-100:#E8EEF2;
-  --mint-50:#F5F7F9;
-  --chalk:#FDFCFB;
-  --ink:#101820;
-  --ink-soft:#57667A;
-  --ball:#C97A2E;
+  --teal-900: #0B1A2C;
+  --teal-800: #123049;
+  --teal-600: #2E5776;
+  --teal-500: #3F7091;
+  --mint-100: #E8EEF2;
+  --mint-50:  #F5F7F9;
+  --chalk:    #FDFCFB;
+  --ink:      #101820;
+  --ink-soft: #57667A;
+  --ball:     #C97A2E;
   --ball-dark:#A85F1F;
-  --gold:#D99A46;
-  --line:#DCE3E8;
-  --danger:#D6483A;
+  --gold:     #D99A46;
+  --line:     #DCE3E8;
+  --danger:   #D6483A;
 
-  --font-display:'Bricolage Grotesque', system-ui, sans-serif;
-  --font-body:'Inter', system-ui, sans-serif;
-  --font-mono:'IBM Plex Mono', ui-monospace, monospace;
+  --font-display: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
+  --font-body:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:    'IBM Plex Mono', ui-monospace, monospace;
 
-  --radius-s:10px;
-  --radius-m:16px;
-  --radius-l:26px;
-  --shadow-card:0 1px 2px rgba(11,26,44,.06), 0 8px 24px -12px rgba(11,26,44,.18);
-  --nav-h:66px;
-  --topbar-h:58px;
+  --radius-s: 10px;
+  --radius-m: 16px;
+  --radius-l: 26px;
+  --shadow-card: 0 1px 3px rgba(11,26,44,.08), 0 6px 16px -4px rgba(11,26,44,.12);
+  --shadow-input: 0 1px 2px rgba(16,24,32,.05);
+  
+  --nav-h: 66px;
+  --topbar-h: 58px;
 }
 
-/* 1. RESET STRICT HORIZONTAL */
+/* ============================================================
+   1. RESET NETTOYÉ & ANTI-DÉBORDEMENT
+   ============================================================ */
 *, *::before, *::after {
-  box-sizing: border-box !important;
+  box-sizing: border-box;
 }
 
-html, body {
-  height: 100%;
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
   margin: 0;
   padding: 0;
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-  background: var(--mint-50);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  background-color: var(--mint-50);
   font-family: var(--font-body);
   color: var(--ink);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* 2. STRUCTURE PRINCIPALE */
+/* ============================================================
+   2. GESTION STRICTE DES VUES (RÈGLE ABSOLUE POUR LES MENUS)
+   ============================================================ */
+.hidden, [hidden] {
+  display: none !important;
+}
+
 #app {
-  display: flex !important;
-  flex-direction: column !important;
-  width: 100% !important;
-  max-width: 100% !important;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
-  overflow-x: hidden !important;
+  position: relative;
 }
 
 .screen {
-  display: none !important;
-  width: 100% !important;
-  max-width: 100% !important;
+  display: none;
+  width: 100%;
+  max-width: 100%;
   flex: 1;
-  flex-direction: column !important;
-  align-items: center !important;
+  flex-direction: column;
 }
 
 .screen.active {
-  display: flex !important;
+  display: flex;
 }
 
-.sidebar { display: none !important; }
+.sidebar {
+  display: none !important;
+}
 
-/* 3. EN-TÊTE (TOPBAR) RESPONSIVE */
+/* ============================================================
+   3. EN-TÊTE (TOPBAR)
+   ============================================================ */
 .topbar {
   height: var(--topbar-h);
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 8px !important;
-  padding: 0 12px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 16px;
   background: var(--chalk);
   border-bottom: 1px solid var(--line);
   position: sticky;
   top: 0;
-  z-index: 20;
-  width: 100% !important;
-  max-width: 100% !important;
+  z-index: 100;
+  width: 100%;
 }
 
 .topbar::before {
@@ -104,163 +123,180 @@ html, body {
 }
 
 .topbar h1 {
-  font-size: 16px !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--teal-900);
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
+  gap: 8px;
 }
 
+/* Sélecteur de mode / sous-menus */
 .view-switch {
-  display: flex;
+  display: inline-flex;
   background: var(--mint-100);
   border-radius: 999px;
-  padding: 2px;
+  padding: 3px;
   gap: 2px;
 }
 
 .view-switch button {
   border: none;
   background: transparent;
-  padding: 5px 8px !important;
+  padding: 6px 12px;
   border-radius: 999px;
   font-weight: 600;
-  font-size: 11px !important;
+  font-size: 12px;
   cursor: pointer;
   color: var(--ink-soft);
-  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
 .view-switch button.active {
   background: var(--teal-600);
-  color: #fff;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(46, 87, 118, 0.25);
 }
 
-/* 4. CONTENU PRINCIPAL */
+/* ============================================================
+   4. CONTENU PRINCIPAL
+   ============================================================ */
 .content {
-  width: 100% !important;
-  max-width: 720px !important;
-  margin: 0 auto !important;
-  padding: 16px 12px calc(var(--nav-h) + 24px) !important;
-  box-sizing: border-box !important;
-  overflow-x: hidden !important;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px 16px calc(var(--nav-h) + 32px);
+  box-sizing: border-box;
 }
 
-/* 5. PAGE DE CONNEXION / AUTHENTIFICATION */
-.auth-container, .login-container, #auth-screen, .auth-card {
-  width: 100% !important;
-  max-width: 400px !important;
-  margin: auto !important;
-  padding: 24px 16px !important;
-  box-sizing: border-box !important;
-}
-
-.auth-card {
-  background: #fff;
-  border-radius: var(--radius-m);
-  padding: 24px 20px !important;
-  box-shadow: var(--shadow-card);
-  text-align: center;
-}
-
-.auth-card h2 {
-  font-size: 20px;
-  color: var(--teal-900);
-  margin-bottom: 8px;
-}
-
-.auth-card p {
-  font-size: 13px;
-  color: var(--ink-soft);
-  margin-bottom: 20px;
-}
-
-.auth-form, form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100% !important;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: left;
-  width: 100% !important;
-}
-
-.form-group label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--teal-800);
-}
-
-.form-group input, input[type="text"], input[type="email"], input[type="password"] {
-  width: 100% !important;
-  height: 44px;
+/* ============================================================
+   5. COMPOSANTS FORMULAIRES & BOUTONS MODERNES
+   ============================================================ */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+select,
+textarea {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 46px;
   padding: 10px 14px;
-  border: 1px solid var(--line);
+  background-color: var(--chalk);
+  border: 1.5px solid var(--line);
   border-radius: var(--radius-s);
+  font-family: var(--font-body);
   font-size: 14px;
-  font-family: inherit;
-  background: var(--chalk);
   color: var(--ink);
+  box-shadow: var(--shadow-input);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   outline: none;
 }
 
-.form-group input:focus {
+input:focus, select:focus, textarea:focus {
   border-color: var(--teal-600);
-  box-shadow: 0 0 0 3px rgba(46, 87, 118, 0.15);
+  box-shadow: 0 0 0 3px rgba(46, 87, 118, 0.18);
 }
 
-/* 6. CARTES ET GRILLES DE CONTENU */
-.card, .stat-card, .goal-card {
-  background: #fff;
+button, .btn {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: var(--radius-s);
+  padding: 12px 18px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  text-decoration: none;
+}
+
+button:active, .btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background-color: var(--ball);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(201, 122, 46, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: var(--ball-dark);
+}
+
+.btn-secondary {
+  background-color: var(--mint-100);
+  color: var(--teal-800);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--teal-600);
+}
+
+.btn-danger {
+  background-color: #FBEAE7;
+  color: var(--danger);
+}
+
+/* ============================================================
+   6. CARTES ET GRILLES DE CONTENU
+   ============================================================ */
+.card, .stat-card, .goal-card, .auth-card {
+  background: #ffffff;
   border-radius: var(--radius-m);
-  padding: 14px;
+  padding: 16px;
   box-shadow: var(--shadow-card);
   margin-bottom: 12px;
-  width: 100% !important;
-  box-sizing: border-box !important;
+  width: 100%;
+  border: 1px solid rgba(220, 227, 232, 0.6);
 }
 
 .stat-row {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: 8px !important;
-  width: 100% !important;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 12px;
 }
 
 .stat-card {
-  flex: 1 1 calc(50% - 4px) !important;
-  min-width: 0 !important;
+  flex: 1 1 calc(50% - 5px);
+  min-width: 130px;
 }
 
 .stat-card .stat-value {
   font-family: var(--font-mono);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--teal-800);
 }
 
 .stat-card .stat-label {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ink-soft);
+  margin-top: 2px;
 }
 
-/* Grille de suggestions */
 .suggestion-grid {
-  display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important;
-  gap: 8px !important;
-  width: 100% !important;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  width: 100%;
 }
 
 .suggestion-chip {
@@ -269,67 +305,55 @@ html, body {
   border-radius: var(--radius-s);
   font-weight: 600;
   color: var(--teal-800);
-  padding: 10px 8px !important;
-  font-size: 11px !important;
-  width: 100% !important;
-  word-break: break-word !important;
-}
-
-/* Boutons */
-.btn, button {
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  font-family: inherit;
-}
-
-.btn-primary {
-  background: var(--ball);
-  color: #fff;
-  width: 100%;
-  border: none;
-  padding: 12px;
-  border-radius: var(--radius-s);
-  font-weight: 700;
-  font-size: 14px;
+  padding: 10px 12px;
+  font-size: 12px;
+  text-align: left;
   cursor: pointer;
 }
 
-/* 7. BARRE DE NAVIGATION INFÉRIEURE HORIZONTALE */
+/* ============================================================
+   7. BARRE DE NAVIGATION INFÉRIEURE HORIZONTALE
+   ============================================================ */
 .bottom-nav, nav.bottom-nav {
-  position: fixed !important;
-  left: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  height: var(--nav-h) !important;
-  background: var(--chalk) !important;
-  border-top: 1px solid var(--line) !important;
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  justify-content: space-around !important;
-  align-items: center !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  z-index: 9999 !important;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: var(--nav-h);
+  background: var(--chalk);
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  z-index: 999;
 }
 
 .bottom-nav > *, .nav-btn {
-  flex: 1 1 0 !important;
-  width: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 2px !important;
-  border: none !important;
-  background: none !important;
-  color: var(--ink-soft) !important;
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
-  padding: 4px 0 !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0;
+  text-decoration: none;
 }
 
-.nav-btn.active { color: var(--teal-600) !important; }
-.nav-btn svg { width: 20px !important; height: 20px !important; }
+.nav-btn.active {
+  color: var(--teal-600);
+}
+
+.nav-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
