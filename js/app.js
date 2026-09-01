@@ -906,3 +906,14 @@ if ("serviceWorker" in navigator) {
   // une session valide (reconnexion automatique), l'appli s'ouvre directement ;
   // sinon l'écran de connexion (déjà affiché par défaut) reste visible.
 })();
+
+// Recharge la page automatiquement dès que le nouveau SW prend la main
+let refreshing = false;
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
+}
