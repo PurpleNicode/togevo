@@ -357,3 +357,110 @@ button:active, .btn:active {
   height: 22px;
   fill: currentColor;
 }
+
+
+/* ============================================================
+   CORRECTIF : ÉTIQUETTES D'OBJECTIFS ET TUILES DE SUCCÈS
+   ============================================================ */
+
+/* --- 1. Cartes d'objectifs & Badges (Pilules) --- */
+.goal-card {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  align-items: flex-start !important;
+}
+
+.goal-card .goal-header, 
+.goal-card .goal-title-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+.goal-title {
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  color: var(--teal-900) !important;
+}
+
+/* Zone des badges (Technique, Mental, Court terme, etc.) */
+.goal-tags, .tags-container, .goal-badges, .badges {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin: 6px 0 !important;
+}
+
+.tag, .badge, .goal-tag, .chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px 10px !important;
+  background-color: var(--mint-100) !important;
+  color: var(--teal-800) !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+/* Zone des boutons Modifier / Supprimer */
+.goal-actions, .card-actions {
+  display: flex !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin-top: 6px !important;
+}
+
+.goal-actions button, .goal-actions .btn {
+  flex: 1 !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+}
+
+
+/* --- 2. Tuiles des Succès (Achievements) --- */
+.achievements-grid, 
+.achievements-list, 
+#achievements-container, 
+#achievements-list {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+  margin-top: 12px !important;
+}
+
+.achievement-card, 
+.achievement-item, 
+.trophy-card {
+  background: #ffffff !important;
+  border-radius: var(--radius-m) !important;
+  padding: 16px 10px !important;
+  box-shadow: var(--shadow-card) !important;
+  border: 1px solid rgba(220, 227, 232, 0.7) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 4px !important;
+  box-sizing: border-box !important;
+}
+
+.achievement-icon, .trophy-icon {
+  font-size: 28px !important;
+  margin-bottom: 2px !important;
+}
+
+.achievement-title, .trophy-title {
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  color: var(--teal-900) !important;
+  line-height: 1.2 !important;
+}
+
+.achievement-status, .trophy-status {
+  font-size: 10.5px !important;
+  color: var(--ink-soft) !important;
+}
