@@ -884,10 +884,21 @@
   }
 
 
-  // ---------------- PWA ----------------
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-  }
+  // PWA
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+
+  // Déclenche le rechargement dès que le nouveau Service Worker prend le contrôle
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
+}
 
   // ---------------- Démarrage ----------------
   // Le démarrage se fait maintenant via la vraie session Supabase (voir
