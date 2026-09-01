@@ -415,36 +415,63 @@ a{ color:inherit; }
 .hidden { display: none !important; }
 
 /* ============================================================
-   CORRECTIFS MOBILE (Scroll & Nav)
+   CORRECTIFS MOBILE (Scroll, Largeur & Conteneurs)
    ============================================================ */
 
-/* 1. Blocage uniquement du débordement horizontal */
+/* 1. Verrouillage strict de la largeur d'écran */
 html, body {
   max-width: 100vw !important;
   overflow-x: hidden !important;
   height: 100%;
   margin: 0;
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit; /* Assure que padding/border sont inclus dans la largeur */
 }
 
 body {
-  overscroll-behavior-y: none; /* Empêche l'effet élastique sans bloquer le scroll */
+  overscroll-behavior-y: none;
 }
 
-/* 2. Permet au conteneur principal de défiler correctement */
+/* 2. Scroll vertical fluide sur la zone principale */
 #app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .content {
   flex: 1;
   overflow-y: auto !important;
+  overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(var(--nav-h) + 40px) !important;
+  padding: 16px 16px calc(var(--nav-h) + 40px) !important;
+  width: 100% !important;
+  max-width: 100vw !important;
 }
 
-/* 3. Force les suggestions d'objectifs à garder des tailles normales */
+/* 3. Sécurisation de toutes les cartes, cartes d'objectifs et conteneurs */
+.card, .auth-card, .stat-card, .suggestion-chip, .goal-card, .sheet {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 4. Gestion des groupes de boutons pour qu'ils s'adaptent sans débordement */
+.goal-actions, .sheet-actions, .role-toggle, .stat-row {
+  display: flex !important;
+  flex-wrap: wrap !important; /* Permet le passage à la ligne si l'écran est étroit */
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.goal-actions button, .sheet-actions .btn, .role-toggle .chip-toggle {
+  flex: 1 1 auto !important;
+  min-width: 0 !important; /* Empêche le bouton de forcer la largeur */
+}
+
 .suggestion-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
@@ -454,11 +481,10 @@ body {
 
 .suggestion-chip {
   width: 100%;
-  box-sizing: border-box;
   word-break: break-word;
 }
 
-/* 4. Barre du bas : alignement strict des boutons en 1 seule ligne horizontale */
+/* 5. Barre de navigation bas (6 icônes alignées) */
 .bottom-nav {
   display: flex !important;
   flex-direction: row !important;
@@ -473,7 +499,6 @@ body {
   box-sizing: border-box;
 }
 
-/* Distribution équitable de la largeur (1/6e chacun) */
 .bottom-nav .nav-btn,
 .bottom-nav > * {
   flex: 1 1 0px !important;
@@ -485,7 +510,6 @@ body {
   padding: 4px 2px !important;
 }
 
-/* Tronquage du texte des boutons si trop long */
 .bottom-nav .nav-btn span,
 .bottom-nav label {
   font-size: 10px !important;
