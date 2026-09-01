@@ -413,3 +413,84 @@ a{ color:inherit; }
 }
 
 .hidden { display: none !important; }
+
+/* ============================================================
+   CORRECTIFS MOBILE (Nav, Étirement & Scroll)
+   ============================================================ */
+
+/* 1. Blocage de l'étirement horizontal et du scroll blanc global */
+html, body {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  height: 100%;
+}
+
+body {
+  position: fixed; /* Verrouille le rebond/overscroll élastique sur iOS */
+  width: 100%;
+  overflow-y: hidden;
+}
+
+/* 2. Contrainte du défilement vertical uniquement dans la zone de contenu */
+#app {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--nav-h) + 24px) !important;
+}
+
+/* 3. Force les suggestions d'objectifs (cases au milieu) à garder des tailles normales */
+.suggestion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+  gap: 10px;
+  width: 100%;
+}
+
+.suggestion-chip {
+  width: 100%;
+  box-sizing: border-box;
+  word-break: break-word; /* Évite qu'un texte long n'étire la case */
+}
+
+/* 4. Barre du bas : alignement strict des boutons en 1 seule ligne horizontale */
+.bottom-nav {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  justify-content: space-around !important;
+  align-items: center !important;
+  width: 100vw !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  position: fixed !important;
+  box-sizing: border-box;
+}
+
+/* Distribution équitable de la largeur (1/6e chacun) */
+.bottom-nav .nav-btn,
+.bottom-nav > * {
+  flex: 1 1 0px !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px 2px !important;
+}
+
+/* Tronquage du texte des boutons si trop long pour éviter tout saut de ligne */
+.bottom-nav .nav-btn span,
+.bottom-nav label {
+  font-size: 10px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
