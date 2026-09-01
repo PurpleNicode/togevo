@@ -415,36 +415,36 @@ a{ color:inherit; }
 .hidden { display: none !important; }
 
 /* ============================================================
-   CORRECTIFS MOBILE (Nav, Étirement & Scroll)
+   CORRECTIFS MOBILE (Scroll & Nav)
    ============================================================ */
 
-/* 1. Blocage de l'étirement horizontal et du scroll blanc global */
+/* 1. Blocage uniquement du débordement horizontal */
 html, body {
   max-width: 100vw !important;
   overflow-x: hidden !important;
   height: 100%;
+  margin: 0;
 }
 
 body {
-  position: fixed; /* Verrouille le rebond/overscroll élastique sur iOS */
-  width: 100%;
-  overflow-y: hidden;
+  overscroll-behavior-y: none; /* Empêche l'effet élastique sans bloquer le scroll */
 }
 
-/* 2. Contrainte du défilement vertical uniquement dans la zone de contenu */
+/* 2. Permet au conteneur principal de défiler correctement */
 #app {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .content {
   flex: 1;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(var(--nav-h) + 24px) !important;
+  padding-bottom: calc(var(--nav-h) + 40px) !important;
 }
 
-/* 3. Force les suggestions d'objectifs (cases au milieu) à garder des tailles normales */
+/* 3. Force les suggestions d'objectifs à garder des tailles normales */
 .suggestion-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
@@ -455,7 +455,7 @@ body {
 .suggestion-chip {
   width: 100%;
   box-sizing: border-box;
-  word-break: break-word; /* Évite qu'un texte long n'étire la case */
+  word-break: break-word;
 }
 
 /* 4. Barre du bas : alignement strict des boutons en 1 seule ligne horizontale */
@@ -485,7 +485,7 @@ body {
   padding: 4px 2px !important;
 }
 
-/* Tronquage du texte des boutons si trop long pour éviter tout saut de ligne */
+/* Tronquage du texte des boutons si trop long */
 .bottom-nav .nav-btn span,
 .bottom-nav label {
   font-size: 10px !important;
