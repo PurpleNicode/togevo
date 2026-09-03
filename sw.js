@@ -1,4 +1,4 @@
-const CACHE_NAME = "togevo-cache-v1.18";
+const CACHE_NAME = "togevo-cache-v1.19";
 const PRECACHE_URLS = [
   "./",
   "./index.html",

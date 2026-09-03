@@ -60,22 +60,11 @@
         <button class="btn btn-secondary btn-block" id="btn-confirm-back-to-login">Retour à la connexion</button>
       </div>
     </div>
-    <p class="demo-note">Étape 1 : le profil (nom, rôles, pseudo, mode, points AFTT) est enregistré sur Supabase. Groupes, objectifs et trophées restent encore locaux au navigateur.</p>
+    <p class="demo-note">Connexion réelle activée — crée ton compte pour commencer. Les groupes, objectifs et trophées restent pour l'instant des données de démonstration locales, en attendant leur migration complète.</p>
   </section>
 
   <!-- ================= APP (post-login) ================= -->
   <div id="app-shell" class="hidden" style="display:flex; flex:1; min-height:100vh;">
-
-    <!-- Desktop sidebar -->
-    <nav class="sidebar desktop-only">
-      <img class="brand-mark" src="icons/icon-192.png" alt="Togevo" style="width:34px;height:34px;">
-      <button class="nav-btn" data-nav="home">🏠<span>Accueil</span></button>
-      <button class="nav-btn" data-nav="training">🏓<span>Entraînement</span></button>
-      <button class="nav-btn" data-nav="players">👥<span>Joueurs</span></button>
-      <button class="nav-btn" data-nav="social">🤝<span>Social</span></button>
-      <button class="nav-btn" data-nav="notifications">🔔<span>Notifs</span></button>
-      <button class="nav-btn" data-nav="profile">⚙️<span>Profil</span></button>
-    </nav>
 
     <div class="main-col">
       <header class="topbar">
@@ -85,8 +74,8 @@
             <button data-view="player">🏓 Mon entraînement</button>
             <button data-view="coach">👨‍🏫 Mes joueurs</button>
           </div>
-          <button class="icon-btn mobile-only" id="btn-open-notifs" aria-label="Notifications">🔔<span class="dot hidden" id="notif-dot"></span></button>
-          <button class="icon-btn mobile-only" id="btn-open-profile" aria-label="Profil">⚙️</button>
+          <button class="icon-btn" id="btn-open-notifs" aria-label="Notifications">🔔<span class="dot hidden" id="notif-dot"></span></button>
+          <button class="icon-btn" id="btn-open-profile" aria-label="Profil">⚙️</button>
         </div>
       </header>
 
@@ -246,7 +235,7 @@
       </main>
 
       <!-- Mobile bottom nav -->
-      <nav class="bottom-nav mobile-only">
+      <nav class="bottom-nav">
         <button class="nav-btn active" data-nav="home">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
           Accueil
